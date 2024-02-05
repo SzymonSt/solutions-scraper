@@ -58,7 +58,7 @@ class GitGubScraper:
                         comments_link = f"{self.config.baseUrl}repos/{repo['full_name']}/issues/{issue['number']}/comments?sort=created&direction=asc"
                         comments, _ = self.get_ghobjects(comments_link)
                         if not comments:
-                            self.logger.warn("Failed to get comments.")
+                            self.logger.warn(f"Failed to get comments. for issue {issue['number']}. Skipping...")
                             continue
                         featured_comment = None
                         for comment in comments:
@@ -75,6 +75,7 @@ class GitGubScraper:
                                 featured_comment = comment["body"]
                                 break
                         if featured_comment and issue["body"]:
+                            self.logger.info(f"Collected issue: {issue['title']}. With featured comment: {featured_comment}\n")
                             issues_batch.append(Issue(issue["title"], issue["body"], issue["url"], featured_comment))
             self.iterations += 1
             self.num_of_collected_issues += len(issues_batch)

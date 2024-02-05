@@ -1,0 +1,10 @@
+version: '3'
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -u main.py gh
+    volumes:
+      - ./logs:/app/logs
+      - ./output:/app/output

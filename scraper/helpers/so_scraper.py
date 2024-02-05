@@ -50,10 +50,13 @@ class StackOverflowScraper:
                 if featured_answer and description:
                     featured_answer = html.unescape(featured_answer)
                     issues_batch.append(Issue(title, description, url, featured_answer))
-            self.iterations += 1
-            self.logger.info(f"Next Page: {self.page} .Processed {self.iterations} iterations\n")
-            df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)
-            df.to_parquet(f"./output/issues-so-{self.iterations}.parquet")
+            if len(issues_batch) >= self.config.batch * 10:   
+                self.iterations += 1
+                self.logger.info(f"Next Page: {self.page} .Processed {self.iterations} iterations\n")
+                df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)
+                df.to_parquet(f"./output/issues-so-{self.iterations}.parquet")
+                issues_batch = []
+            time.sleep(1.25)
     
     
     def get_ghobjects(self, link):

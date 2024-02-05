@@ -18,6 +18,7 @@ class GitGubScraper:
         self.num_of_collected_issues = 0
         self.iterations = iteration
         self.since = since
+        self.batch = 100
 
         # Initilize helpers
         self.logger = logging.getLogger(__name__)
@@ -77,12 +78,13 @@ class GitGubScraper:
                         if featured_comment and issue["body"]:
                             self.logger.info(f"Collected issue: {issue['title']}. With featured comment: {featured_comment}\n")
                             issues_batch.append(Issue(issue["title"], issue["body"], issue["url"], featured_comment))
-            self.iterations += 1
-            self.num_of_collected_issues += len(issues_batch)
-            self.logger.info(f"Next Page: {repos_link} .Processed {self.iterations} iterations. Request Quota left {self.rate_limit}. Collected issues: {self.num_of_collected_issues}\n")
-            df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)
-            df.to_parquet(f"./output/issues-gh-{self.iterations}.parquet")
-            issues_batch = []
+            if len(issues_batch) >= self.batch * 10:
+                self.iterations += 1
+                self.num_of_collected_issues += len(issues_batch)
+                self.logger.info(f"Next Page: {repos_link} .Processed {self.iterations} iterations. Request Quota left {self.rate_limit}. Collected issues: {self.num_of_collected_issues}\n")
+                df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)
+                df.to_parquet(f"./output/issues-gh-{self.iterations}.parquet")
+                issues_batch = []
             time.sleep(1.5)
 
 

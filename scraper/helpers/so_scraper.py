@@ -1,6 +1,7 @@
 import requests
 import time
 import logging
+import html
 from datetime import datetime, timedelta
 import pandas as pd
 from helpers.so_scraper_config import StackOverflowScraperConfig
@@ -8,7 +9,7 @@ from helpers.issue import Issue
 
 
 class StackOverflowScraper:
-    def __init__(self, config: StackOverflowScraperConfig, iteration: int = 0, since: int = 0):
+    def __init__(self, config: StackOverflowScraperConfig, iteration: int = 0, since: int = 1):
         # Initilize config
         self.config = config
 
@@ -21,7 +22,7 @@ class StackOverflowScraper:
         # Initilize helpers
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        handler = logging.FileHandler('./logs/ghscraper.log')
+        handler = logging.FileHandler('./logs/soscraper.log')
         handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
         self.logger.addHandler(handler)
 
@@ -47,11 +48,11 @@ class StackOverflowScraper:
                     if answers_sorted_by_score[0]['score'] > 0:
                         featured_answer = answers_sorted_by_score[0]["body_markdown"]
                 if featured_answer and description:
+                    featured_answer = html.unescape(featured_answer)
                     issues_batch.append(Issue(title, description, url, featured_answer))
             self.iterations += 1
             self.logger.info(f"Next Page: {self.page} .Processed {self.iterations} iterations\n")
             df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)
-            print(df.head())
             df.to_parquet(f"./output/issues-so-{self.iterations}.parquet")
     
     
@@ -59,7 +60,7 @@ class StackOverflowScraper:
         status_code = 0
         retries = 5
         while status_code != 200:
-            resp = requests.get(link, headers=self.config.headers)
+            resp = requests.get(link)
             status_code = resp.status_code
             if self.rate_limit <= 5:
                 reset_time = 3600 * 24

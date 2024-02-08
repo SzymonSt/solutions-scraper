@@ -50,7 +50,7 @@ class StackOverflowScraper:
                 if featured_answer and description:
                     featured_answer = html.unescape(featured_answer)
                     issues_batch.append(Issue(title, description, url, featured_answer))
-            if len(issues_batch) >= self.config.batch * 10:   
+            if len(issues_batch) >= self.config.batch * 5:   
                 self.iterations += 1
                 self.logger.info(f"Next Page: {self.page} .Processed {self.iterations} iterations\n")
                 df = pd.DataFrame([vars(issue) for issue in issues_batch], columns=["title", "description", "url", "featured_answer"], dtype=object)

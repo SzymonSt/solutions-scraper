@@ -18,6 +18,7 @@ class Extractor:
                          "timeout", "deadlock", "corrupt", "invalid", "illegal", "unhandled", "uncaught", 
                          "unexpected", "unimplemented", "unsupported", "missing", "invalid", "illegal", 
                          "unauthorized", "denied", "forbidden", "blocked", "rejected", "panic", "abort"]
+        self.must_exclude_beggining_keywords = ['js','javascript', 'shell', 'scala', 'xml', 'html', 'css']
 
     def extract(self):
         print(f"Extracting log files from {self.path}...")

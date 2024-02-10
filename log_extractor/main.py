@@ -18,10 +18,17 @@ class Extractor:
                          "timeout", "deadlock", "corrupt", "invalid", "illegal", "unhandled", "uncaught", 
                          "unexpected", "unimplemented", "unsupported", "missing", "invalid", "illegal", 
                          "unauthorized", "denied", "forbidden", "blocked", "rejected", "panic", "abort"]
-        self.must_exclude_beggining_keywords = ['js','javascript', 'shell', 'scala', 'xml', 'html', 'css']
+        self.must_exclude_beggining_keywords = ['js','javascript', 'scala', 'xml', 'html', 'css', 'ts', 'cs',
+                                                'java', 'c', 'cpp', 'react', 'py', 'go']
+        self.must_exclude_keywords = ['\n<issue_comment']
+        self.code_block_filters = ['{','}',';','if', 'else', 'elif', 'for', 'while', 'do', 'try', 'catch', 'finally']
 
     def extract(self):
         print(f"Extracting log files from {self.path}...")
+        try:
+            os.mkdir("./extracted_logs")
+        except FileExistsError:
+            pass
         files = os.listdir(self.path)
         for file_name in files:
             print(f"Extracting from {file_name}...")
@@ -59,6 +66,11 @@ class Extractor:
                 candidates.extend(self._find_log_markup(content, sc))
 
         logs = [c for c in candidates if len(c) > self.min_char_num and any(k in c.lower() for k in self.keywords)]
+        logs = [l for l in logs if not any(k in l.lower() for k in self.must_exclude_keywords)]
+        logs = [l.strip('`').strip('```').strip('\n').strip('\r\n') for l in logs]
+        logs = [l for l in logs if not any(l.lower().startswith(k) for k in self.must_exclude_beggining_keywords)]
+        if len(logs) > 0:
+            logs = self._drop_code_blocks(logs)
         return logs
 
     def _find_log_markup(self, content: str, stop_word: str) -> list:
@@ -80,7 +92,16 @@ class Extractor:
             else:
                 break
         return candidates
-
+    
+    def _drop_code_blocks(self, logs: list) -> list:
+        logs_copy = logs.copy()
+        for l in logs_copy:
+            tokens = l.replace('\r\n', ' ').replace('\n', ' ').split(' ')
+            num_tokens = len(tokens)
+            num_code_block_tokens = len([t for t in tokens if any(f in t for f in self.code_block_filters)])
+            if num_code_block_tokens/num_tokens > 0.75:
+                logs_copy.remove(l)
+        return logs_copy
     def _save_batch(self, logs, file_name) -> bool:
         try:
             df = pd.DataFrame(logs, columns=["logs"])

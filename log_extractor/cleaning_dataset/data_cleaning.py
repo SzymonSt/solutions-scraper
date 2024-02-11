@@ -1,5 +1,6 @@
 import csv
 import re
+import pandas as pd
 
 def remove_info_lines(input_csv, output_csv):
     keywords_to_keep = ["error", "exception", "fail", "warning", "critical", "fatal", "stacktrace", 
@@ -39,13 +40,19 @@ def remove_empty_lines(input_csv, output_csv):
             if any(field.strip() for field in row):  # Check if any field in the row contains non-whitespace characters
                 writer.writerow(row)
 
+def csv_to_parquet(input_csv, output_parquet):
+    df = pd.read_csv(input_csv)
+    df.to_parquet(output_parquet)
+
 # Example usage:
 if __name__ == "__main__":
     input_csv = "example.csv" 
     intermediate_csv = "example1.csv" 
     output_csv = "example_without_spaces.csv"  
-    output_csv_final = "example_without_spaces_and_newlines.csv"  
+    output_csv_final = "example_without_spaces_and_newlines.csv"
+    output_parquet = "output_data.parquet"  
 
     remove_info_lines(input_csv, intermediate_csv)
     remove_spaces(intermediate_csv, output_csv)
     remove_empty_lines(output_csv, output_csv_final)
+    csv_to_parquet(input_csv, output_parquet)

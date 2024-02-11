@@ -20,8 +20,10 @@ class Extractor:
                          "unauthorized", "denied", "forbidden", "blocked", "rejected", "panic", "abort"]
         self.must_exclude_beggining_keywords = ['js','javascript', 'scala', 'xml', 'html', 'css', 'ts', 'cs',
                                                 'java', 'c', 'cpp', 'react', 'py', 'go']
-        self.must_exclude_keywords = ['\n<issue_comment']
-        self.code_block_filters = ['{','}',';','if', 'else', 'elif', 'for', 'while', 'do', 'try', 'catch', 'finally']
+        self.must_exclude_keywords = ['\n<issue_comment',"//", " i ", ".i ",".you "," you ", " are ", 
+                                      "i'm", " am ","you're", "they", "yours", "your", "mine", "my", "ours", "our"]
+        self.code_block_filters = ['{','}',';','if', 'else', 'elif', 'for', 'while', 'do', 'try',
+                                   'catch', 'finally', 'function', 'def', 'class', 'interface', 'enum']
 
     def extract(self):
         print(f"Extracting log files from {self.path}...")
@@ -99,13 +101,13 @@ class Extractor:
             tokens = l.replace('\r\n', ' ').replace('\n', ' ').split(' ')
             num_tokens = len(tokens)
             num_code_block_tokens = len([t for t in tokens if any(f in t for f in self.code_block_filters)])
-            if num_code_block_tokens/num_tokens > 0.75:
+            if num_code_block_tokens + tokens.count('') > 0.25*num_tokens:
                 logs_copy.remove(l)
         return logs_copy
     def _save_batch(self, logs, file_name) -> bool:
         try:
             df = pd.DataFrame(logs, columns=["logs"])
-            df.to_parquet(f"./extracted_logs/{self.output_file_prefix}{file_name}.parquet")
+            df.to_parquet(f"./extracted_logs/{self.output_file_prefix}{file_name}")
         except Exception as e:
             print(f"Error saving batch to file {file_name}: {e}")
             time.sleep(5)
@@ -116,10 +118,18 @@ class Extractor:
 
 
 def main():
-    file_path = "D:\\Projects\\the-stack-github-issues\\data"
-    columns = ["content"]
-    output_file_prefix = "gh__"
-    ext = Extractor(file_path, columns, output_file_prefix)
+    # Github issues config
+    # content_path = "D:\\Projects\\the-stack-github-issues\\data"
+    # columns = ["content"]
+    # output_file_prefix = "gh__"
+
+    # Stackoverflow issues config
+    content_path = "D:\\Projects\\stackoverflow-posts"
+    columns = ["Body"]
+    output_file_prefix = "so__"
+
+
+    ext = Extractor(content_path, columns, output_file_prefix)
     ext.extract()
 
 
